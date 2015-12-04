@@ -1,7 +1,7 @@
 #include <Adafruit_NeoPixel.h>
 #include "ShieldPattern.h"
 
-#define PIN_SMALL 3
+#define PIN_SMALL 4
 #define PIN_LARGE 1
 #define LEDS_SMALL 9
 #define LEDS_LARGE 16
@@ -16,8 +16,9 @@ bool speedChange = false;
 bool accelerating_small = true;
 bool accelerating_large = true;
 
-//Adafruit_NeoPixel strip_small = Adafruit_NeoPixel(LEDS_SMALL, PIN_SMALL, NEO_GRB + NEO_KHZ800);
-//Adafruit_NeoPixel strip_large = Adafruit_NeoPixel(LEDS_LARGE, PIN_LARGE, NEO_GRB + NEO_KHZ800);
+String pattern = "rainbow";
+uint16_t cycles = 1;
+
 void setup() {
   small_circle.begin();
   large_circle.begin();

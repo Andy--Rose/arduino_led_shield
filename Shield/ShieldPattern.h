@@ -1,5 +1,3 @@
-//#include <Adafruit_NeoPixel.h>
-
 enum pattern { NONE, THEATER_CHASE, RAINBOW_CYCLE, COLOR_WIPE };
 enum direction { FORWARD, REVERSE };
 
