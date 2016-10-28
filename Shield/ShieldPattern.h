@@ -1,20 +1,20 @@
-enum pattern { NONE, THEATER_CHASE, RAINBOW_CYCLE, COLOR_WIPE };
 enum direction { FORWARD, REVERSE };
-
 
 class ShieldPattern : public Adafruit_NeoPixel
 {
+  private:
+    String patterns[3] = { "THEATER_CHASE", "RAINBOW_CYCLE", "COLOR_WIPE" };
   public:
     // Member Variables:
-    pattern ActivePattern;
     direction Direction;
 
     unsigned long Interval;     // milliseconds between updates
     unsigned long lastUpdate;   // last update of position
 
     uint32_t Color1, Color2;
-    uint16_t TotalSteps;        // total number of steps in the pattern
-    uint16_t Index;
+    uint32_t TotalSteps;        // total number of steps in the pattern
+    uint32_t Index;
+    uint32_t PatternIndex = 0;
 
     void (*OnComplete)();       // callback
 
@@ -31,19 +31,15 @@ class ShieldPattern : public Adafruit_NeoPixel
         if((millis() - lastUpdate) > Interval) // time to update
         {
             lastUpdate = millis();
-            switch(ActivePattern)
-            {
-                case THEATER_CHASE:
-                    TheaterChaseUpdate();
-                    break;
-                case RAINBOW_CYCLE:
-                    RainbowCycleUpdate();
-                    break;
-                case COLOR_WIPE:
-                    ColorWipeUpdate();
-                    break;
-                default:
-                    break;
+            String pattern = patterns[PatternIndex];
+            if (pattern == "THEATER_CHASE") {
+                TheaterChaseUpdate();
+            }
+            else if (pattern == "RAINBOW_CYCLE") {
+              RainbowCycleUpdate();
+            }
+            else {
+              ColorWipeUpdate();
             }
         }
     }
@@ -77,10 +73,28 @@ class ShieldPattern : public Adafruit_NeoPixel
         }
     }
 
+    String GetPattern() {
+      return patterns[PatternIndex];
+    }
+
+    void NextPattern()
+    {
+      if (PatternIndex == 0) {// THEATRE
+          PatternIndex = 1;
+          RainbowCycle(1);
+      } else if (PatternIndex == 1) {// RAINBOW
+          PatternIndex = 2;
+          ColorWipe(Color(255,255,0), 1);
+      } else {
+          PatternIndex = 0;
+          TheaterChase(Color(255,255,0), Color(0,0,50), 100);
+      }
+    }
+
     // Initialize for a ColorWipe
     void ColorWipe(uint32_t color, uint8_t interval, direction dir = FORWARD)
     {
-        ActivePattern = COLOR_WIPE;
+        PatternIndex = 2;
         Interval = interval;
         TotalSteps = numPixels();
         Color1 = color;
@@ -91,14 +105,19 @@ class ShieldPattern : public Adafruit_NeoPixel
     // Update the Color Wipe Pattern
     void ColorWipeUpdate()
     {
-        setPixelColor(Index, Color1);
+        if (Direction == REVERSE) {
+          setPixelColor(Index, Color(0,0,0));
+        } else {
+          setPixelColor(Index, Color1);
+        }
         show();
+        delay(10);
         Increment();
     }
 
     void RainbowCycle(uint8_t interval, direction dir = FORWARD)
     {
-      ActivePattern = RAINBOW_CYCLE;
+      PatternIndex = 1;
       Interval = interval;
       TotalSteps = 255;
       Index = 0;
@@ -119,7 +138,7 @@ class ShieldPattern : public Adafruit_NeoPixel
     // Initialize for a Theater Chase
     void TheaterChase(uint32_t color1, uint32_t color2, uint8_t interval, direction dir = FORWARD)
     {
-        ActivePattern = THEATER_CHASE;
+        PatternIndex = 0;
         Interval = interval;
         TotalSteps = numPixels();
         Color1 = color1;
