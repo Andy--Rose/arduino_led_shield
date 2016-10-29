@@ -2,7 +2,7 @@
 #include "ShieldPattern.h"
 
 #define PIN_SMALL 4
-#define PIN_LARGE 1
+#define PIN_LARGE 6
 #define LEDS_SMALL 9
 #define LEDS_LARGE 16
 #define MIN_CHASE_SPEED 60
@@ -18,7 +18,7 @@ bool accelerating_large = true;
 
 String pattern = "rainbow";
 int lastButtonVal = HIGH;
-const int buttonPin = 2;
+const int buttonPin = 3;
 uint16_t cycles = 1;
 
 void setup() {
