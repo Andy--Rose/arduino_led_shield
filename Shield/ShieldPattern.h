@@ -106,7 +106,7 @@ class ShieldPattern : public Adafruit_NeoPixel
     void ColorWipeUpdate()
     {
         if (Direction == REVERSE) {
-          setPixelColor(Index, Color(0,0,0));
+          setPixelColor(TotalSteps - Index, Color(0,0,0));
         } else {
           setPixelColor(Index, Color1);
         }
