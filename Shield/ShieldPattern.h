@@ -1,3 +1,5 @@
+#define COLOR_WIPE_INTERVAL 20
+#define THEATRE_CHASE_INTERVAL 100
 enum direction { FORWARD, REVERSE };
 
 class ShieldPattern : public Adafruit_NeoPixel
@@ -84,10 +86,10 @@ class ShieldPattern : public Adafruit_NeoPixel
           RainbowCycle(1);
       } else if (PatternIndex == 1) {// RAINBOW
           PatternIndex = 2;
-          ColorWipe(Color(255,255,0), 20);
+          ColorWipe(Color(255,255,0), COLOR_WIPE_INTERVAL);
       } else {
           PatternIndex = 0;
-          TheaterChase(Color(255,255,0), Color(0,0,50), 100);
+          TheaterChase(Color(255,255,0), Color(0,0,50), THEATRE_CHASE_INTERVAL);
       }
     }
 
