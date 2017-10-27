@@ -84,7 +84,7 @@ class ShieldPattern : public Adafruit_NeoPixel
           RainbowCycle(1);
       } else if (PatternIndex == 1) {// RAINBOW
           PatternIndex = 2;
-          ColorWipe(Color(255,255,0), 1);
+          ColorWipe(Color(255,255,0), 20);
       } else {
           PatternIndex = 0;
           TheaterChase(Color(255,255,0), Color(0,0,50), 100);
@@ -111,7 +111,6 @@ class ShieldPattern : public Adafruit_NeoPixel
           setPixelColor(Index, Color1);
         }
         show();
-        delay(10);
         Increment();
     }
 
