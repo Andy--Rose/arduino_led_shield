@@ -4,7 +4,7 @@
 #define PIN_SMALL 4
 #define PIN_LARGE 6
 #define LEDS_SMALL 9
-#define LEDS_LARGE 16
+#define LEDS_LARGE 13
 #define MIN_CHASE_SPEED 60
 #define MAX_CHASE_SPEED 30
 #define CHASE_SPEED_INTERVAL 2
