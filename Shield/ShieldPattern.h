@@ -1,19 +1,23 @@
-#define COLOR_WIPE_INTERVAL 20
+#define COLOR_WIPE_INTERVAL 50
+#define COLOR_WIPE_FADE_RATE 30
 #define THEATRE_CHASE_INTERVAL 100
+#define RAINBOW_INTERVAL 10
 enum direction { FORWARD, REVERSE };
 
 class ShieldPattern : public Adafruit_NeoPixel
 {
   private:
-    String patterns[3] = { "THEATER_CHASE", "RAINBOW_CYCLE", "COLOR_WIPE" };
+    String patterns[4] = { "RAINBOW_CYCLE", "COLOR_WIPE", "THEATER_CHASE", "LOOPY" };
   public:
     // Member Variables:
     direction Direction;
 
-    unsigned long Interval;     // milliseconds between updates
-    unsigned long lastUpdate;   // last update of position
+    uint32_t Interval;     // milliseconds between updates
+    uint32_t FadeRate;     // when fading, amount to reduce colors per interval
+    uint32_t lastUpdate;   // last update of position
 
     uint32_t Color1, Color2;
+    uint32_t R, G, B;
     uint32_t TotalSteps;        // total number of steps in the pattern
     uint32_t Index;
     uint32_t PatternIndex = 0;
@@ -40,8 +44,10 @@ class ShieldPattern : public Adafruit_NeoPixel
             else if (pattern == "RAINBOW_CYCLE") {
               RainbowCycleUpdate();
             }
-            else {
+            else if (pattern == "COLOR_WIPE") {
               ColorWipeUpdate();
+            } else {
+              LoopyUpdate();
             }
         }
     }
@@ -81,25 +87,31 @@ class ShieldPattern : public Adafruit_NeoPixel
 
     void NextPattern()
     {
-      if (PatternIndex == 0) {// THEATRE
-          PatternIndex = 1;
-          RainbowCycle(1);
-      } else if (PatternIndex == 1) {// RAINBOW
-          PatternIndex = 2;
-          ColorWipe(Color(255,255,0), COLOR_WIPE_INTERVAL);
-      } else {
+      if (PatternIndex == 3) {// RAINBOW
           PatternIndex = 0;
-          TheaterChase(Color(255,255,0), Color(0,0,50), THEATRE_CHASE_INTERVAL);
+          RainbowCycle(RAINBOW_INTERVAL, FORWARD);
+      } else if (PatternIndex == 0) {// WIPE
+          PatternIndex = 1;
+          ColorWipe(255, 255, 0, COLOR_WIPE_INTERVAL, COLOR_WIPE_FADE_RATE, FORWARD);
+      } else if (PatternIndex == 1) {// THEATRE
+          PatternIndex = 2;
+          TheaterChase(Color(255,255,0), Color(0,0,50), THEATRE_CHASE_INTERVAL, FORWARD);
+      } else {
+          PatternIndex = 3;
+          Loopy(255, 255, 0, COLOR_WIPE_INTERVAL, COLOR_WIPE_FADE_RATE, FORWARD);
       }
     }
 
     // Initialize for a ColorWipe
-    void ColorWipe(uint32_t color, uint8_t interval, direction dir = FORWARD)
+    void ColorWipe(uint32_t r, uint32_t g, uint32_t b, uint32_t interval, uint8_t fadeRate, direction dir = FORWARD)
     {
-        PatternIndex = 2;
         Interval = interval;
+        FadeRate = fadeRate;
         TotalSteps = numPixels();
-        Color1 = color;
+        R = r;
+        G = g;
+        B = b;
+        Color1 = Color(r,g,b);
         Index = 0;
         Direction = dir;
     }
@@ -107,18 +119,65 @@ class ShieldPattern : public Adafruit_NeoPixel
     // Update the Color Wipe Pattern
     void ColorWipeUpdate()
     {
+//        for(int i=0; i < TotalSteps; i++)
+//        {
+//          setPixelColor(i, Color(0,0,0));
+//        }
+
+        // Set the pixel
+//        setPixelColor(Index, Color(R,G,B));
         if (Direction == REVERSE) {
+          if (TotalSteps - Index == 1) {
+            setPixelColor(0, Color(0,0,0));
+          }
           setPixelColor(TotalSteps - Index, Color(0,0,0));
         } else {
           setPixelColor(Index, Color1);
         }
+//        // Fade the tail
+//        for (int i=1; i < 4; i++)
+//        {
+//          int fadePixel = Index - i;
+//          if (fadePixel < 0)
+//          {
+//            fadePixel = numPixels() - abs(fadePixel);
+//          }
+//          int fadeDiff = COLOR_WIPE_FADE_RATE * i;
+//          setPixelColor(fadePixel, DimColorRGB(R, G, B, fadeDiff));
+//        }
         show();
         Increment();
     }
 
-    void RainbowCycle(uint8_t interval, direction dir = FORWARD)
+    // Initialize for a ColorWipe
+    void Loopy(uint32_t r, uint32_t g, uint32_t b, uint32_t interval, uint8_t fadeRate, direction dir = FORWARD)
     {
-      PatternIndex = 1;
+        Interval = interval;
+        FadeRate = fadeRate;
+        TotalSteps = numPixels();
+        R = r;
+        G = g;
+        B = b;
+        Index = 0;
+        Direction = dir;
+    }
+
+    // Update the Loopy Pattern
+    void LoopyUpdate()
+    {
+        for(int i=0; i < TotalSteps; i++)
+        {
+          setPixelColor(i, Color(0,0,0));
+        }
+
+        // Set the pixel
+        setPixelColor(Index, Color(R,G,B));
+        show();
+        Increment();
+    }
+
+    void RainbowCycle(uint32_t interval, direction dir = FORWARD)
+    {
       Interval = interval;
       TotalSteps = 255;
       Index = 0;
@@ -137,9 +196,8 @@ class ShieldPattern : public Adafruit_NeoPixel
     }
 
     // Initialize for a Theater Chase
-    void TheaterChase(uint32_t color1, uint32_t color2, uint8_t interval, direction dir = FORWARD)
+    void TheaterChase(uint32_t color1, uint32_t color2, uint32_t interval, direction dir = FORWARD)
     {
-        PatternIndex = 0;
         Interval = interval;
         TotalSteps = numPixels();
         Color1 = color1;
@@ -186,10 +244,17 @@ class ShieldPattern : public Adafruit_NeoPixel
     }
 
     // Return color, dimmed by 75% (used by scanner)
-    uint32_t DimColor(uint32_t color)
+    uint32_t DimColorRGB(uint32_t r, uint32_t g, uint32_t b, uint32_t amount)
     {
-        uint32_t dimColor = Color(Red(color) >> 1, Green(color) >> 1, Blue(color) >> 1);
-        return dimColor;
+      uint32_t dimRed = r - amount;
+      if (dimRed < 0) { r = 0; }
+      uint32_t dimGreen = g - amount;
+      if (dimGreen < 0) { g = 0; }
+      uint32_t dimBlue = b - amount;
+      if (dimBlue < 0) { b = 0; }
+      
+      uint32_t dimColor = Color(dimRed, dimGreen, dimBlue);
+      return dimColor;
     }
 
     // Input a value 0 to 255 to get a color value.
